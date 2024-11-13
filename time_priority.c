@@ -155,3 +155,10 @@ int main() {
     displayResults(processes, n);
     return 0;
 }
+
+//4
+//0 6 2
+//1 8 1
+//2 7 3
+//3 3 4
+//1
