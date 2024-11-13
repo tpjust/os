@@ -160,3 +160,9 @@ int main()
     displayResults(processes, n);
     return 0;
 }
+
+/*3
+0 8
+1 4
+2 9
+2*/
