@@ -1,5 +1,3 @@
-// C-SCAN disk scheduling
-
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -48,20 +46,25 @@ void CSCAN(int head, int requests[], int n, int disk_size)
         head = requests[i];
     }
 
-    // Jump to the beginning of the disk
+    // Jump to the end of the disk if not already there
     if (head != disk_size - 1)
     {
         int seek_time = abs((disk_size - 1) - head);
         total_seek_time += seek_time;
         printf("%d\t\t%d\t\t\t%d\n", disk_size - 1, head, seek_time);
-        head = 0; // Jump to 0 (beginning of the disk)
-        printf("%d\t\t%d\t\t\t%d\n", 0, disk_size - 1, head);
+        head = disk_size - 1;
     }
 
-    // Continue serving requests from the start to the head position
+    // Wrap around to the beginning of the disk
+    int seek_time = abs(head - 0);
+    total_seek_time += seek_time;
+    printf("%d\t\t%d\t\t\t%d\n", 0, head, seek_time);
+    head = 0;
+
+    // Continue serving requests from the start to the initial position
     for (i = 0; i < pos; i++)
     {
-        int seek_time = abs(requests[i] - head);
+        seek_time = abs(requests[i] - head);
         total_seek_time += seek_time;
         printf("%d\t\t%d\t\t\t%d\n", requests[i], head, seek_time);
         head = requests[i];
@@ -102,12 +105,13 @@ int main()
     return 0;
 }
 
-/*6
-98
-183
-37
-122
-14
-124
+/*7
+82
+170
+43
+140
+24
+16
+190
 50
 200*/
