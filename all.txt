@@ -1,4 +1,5 @@
 // load ALP program
+// load ALP program
 
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -1107,126 +1108,168 @@ int main() {
 
 
 // Opcode error in a given job
-
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class OpcodeChecker {
-    // Define a set of valid opcodes
-    private static final Set<String> VALID_OPCODES = new HashSet<>(Arrays.asList(
-            "MOV", "ADD", "SUB", "STORE", "LOAD", "MUL", "DIV", "JMP", "CMP"
-    // Add more valid opcodes as needed
-    ));
+    // List of valid opcodes
+    private static final Set<String> validOpcodes = new HashSet<>(Arrays.asList(
+            "GD", "PD", "LR", "SR", "H", "BT", "CR"));
 
     public static void main(String[] args) {
-        // Hardcoded array of instructions
-        String[] instructions = {
-                "MOV A, 5",
-                "ADD B, A",
-                "INVALID_OP D, E" // This instruction contains an invalid opcode
-        };
+        // Sample job input
+        String job = "$AMJ020200160005\n" +
+                "GD20PD20LD20SR30SR31PD30SR40SR41SR42PD40\n" +
+                "SR50SR51PD50SR60PD60H\n" +
+                "$DTA\n" +
+                "*\n" +
+                "$END0202";
 
-        System.out.println("Checking instructions for opcode errors...");
+        // Process the job
+        checkOpcodeErrors(job);
+    }
 
-        for (int i = 0; i < instructions.length; i++) {
-            String instruction = instructions[i].trim();
-            System.out.println("Instruction " + (i + 1) + ": " + instruction);
+    // Method to check for opcode errors
+    public static void checkOpcodeErrors(String job) {
+        // Split job into lines
+        String[] lines = job.split("\n");
 
-            // Check if the opcode is valid
-            if (!isValidOpcode(instruction)) {
-                System.out.println("Opcode Error: Invalid opcode found in instruction '" + instruction + "'");
-                System.out.println("Interrupt raised due to invalid opcode.");
-                return; // Stop further execution if an invalid opcode is found
+        // Boolean to track if we are in the instructions section
+        boolean inInstructions = false;
+
+        // Loop through each line
+        for (String line : lines) {
+            // Skip lines until we reach the instructions part
+            if (line.startsWith("$AMJ")) {
+                inInstructions = true;
+                continue;
+            }
+            if (line.startsWith("$DTA") || line.startsWith("$END")) {
+                inInstructions = false;
+            }
+
+            // Process instructions only if in the instructions section
+            if (inInstructions) {
+                // Extract opcodes and validate them
+                checkInstructions(line);
             }
         }
-
-        System.out.println("All instructions are valid. No opcode errors detected.");
     }
 
-    private static boolean isValidOpcode(String instruction) {
-        // Split the instruction by space to extract the opcode
-        String[] parts = instruction.split(" ");
-        if (parts.length == 0) {
-            return false; // Empty instruction
+    // Method to check each instruction in the line
+    public static void checkInstructions(String line) {
+        // Split line into opcode sequences (2 chars for opcode, rest for operand)
+        for (int i = 0; i < line.length(); i += 4) {
+            if (i + 2 <= line.length()) {
+                String opcode = line.substring(i, i + 2); // Extract the opcode part
+                // Validate opcode
+                if (!validOpcodes.contains(opcode)) {
+                    raiseInterrupt(opcode);
+                }
+            }
         }
+    }
 
-        String opcode = parts[0]; // The first part is the opcode
-        return VALID_OPCODES.contains(opcode); // Check if the opcode is in the set of valid opcodes
+    // Method to raise an interrupt if an invalid opcode is found
+    public static void raiseInterrupt(String invalidOpcode) {
+        System.err.println("Interrupt Raised: Invalid Opcode Detected - " + invalidOpcode);
     }
 }
+
 
 //  Oprand error in a given job
+import java.util.*;
 
-// Define a custom exception to simulate an operand error interrupt
-class OperandError extends Exception {
-    public OperandError(String message) {
-        super(message);
+public class OperandChecker {
+    // List of valid opcodes
+    private static final Set<String> validOpcodes = new HashSet<>(Arrays.asList(
+            "GD", "PD", "LR", "SR", "H"));
+
+    // Define the valid range for operands (00-99 for 2-digit numbers)
+    private static final int MIN_OPERAND = 0;
+    private static final int MAX_OPERAND = 99;
+
+    public static void main(String[] args) {
+        // Sample job input
+        String job = "$AMJ020200160005\n" +
+                "GD20PD2ALR20SR30SR31PD30SR40SR41SR42PD40\n" +
+                "SR50SR51PD50SR60PD60H\n" +
+                "$DTA\n" +
+                "*\n" +
+                "$END0202";
+
+        // Process the job
+        checkOperandErrors(job);
     }
-}
 
-public class OperandErrorCheck {
+    // Method to check for operand errors
+    public static void checkOperandErrors(String job) {
+        // Split job into lines
+        String[] lines = job.split("\n");
 
-    // Function to check for operand errors in a job
-    public static void checkOperandError(String[][] operations) throws OperandError {
-        for (int i = 0; i < operations.length; i++) {
-            try {
-                String operator = operations[i][0];
-                double operand1 = Double.parseDouble(operations[i][1]);
-                double operand2 = Double.parseDouble(operations[i][2]);
+        // Boolean to track if we are in the instructions section
+        boolean inInstructions = false;
 
-                // Simulate different operations and check for errors
-                double result = 0;
-                switch (operator) {
-                    case "add":
-                        result = operand1 + operand2;
-                        break;
-                    case "subtract":
-                        result = operand1 - operand2;
-                        break;
-                    case "multiply":
-                        result = operand1 * operand2;
-                        break;
-                    case "divide":
-                        if (operand2 == 0) {
-                            throw new OperandError("Operand error in operation " + i + ": Division by zero");
-                        }
-                        result = operand1 / operand2;
-                        break;
-                    default:
-                        throw new OperandError(
-                                "Operand error in operation " + i + ": Undefined operator '" + operator + "'");
-                }
+        // Loop through each line
+        for (String line : lines) {
+            // Identify the start and end of the instructions section
+            if (line.startsWith("$AMJ")) {
+                inInstructions = true;
+                continue;
+            }
+            if (line.startsWith("$DTA") || line.startsWith("$END")) {
+                inInstructions = false;
+            }
 
-                // Output the result of the operation
-                System.out.println("Operation " + i + " (" + operator + "): " + operand1 + " " + operator + " "
-                        + operand2 + " = " + result);
-            } catch (NumberFormatException e) {
-                // Handle invalid operand types (e.g., non-numeric strings)
-                throw new OperandError("Operand error in operation " + i + ": Incompatible operand types.");
+            // Process instructions only if in the instructions section
+            if (inInstructions) {
+                // Validate each instruction in the line
+                checkInstructions(line);
             }
         }
     }
 
-    public static void main(String[] args) {
-        // Define a set of operations (operator, operand1, operand2)
-        String[][] operations = {
-                { "add", "10", "5" }, // Valid operation
-                { "subtract", "7", "3" }, // Valid operation
-                { "divide", "8", "0" }, // Division by zero (operand error)
-                { "multiply", "6", "two" }, // Invalid operand type (operand error)
-                { "add", "4", "2" }, // Valid operation
-                { "mod", "5", "2" } // Undefined operator (operand error)
-        };
+    // Method to check each instruction in the line
+    public static void checkInstructions(String line) {
+        // Process each opcode-operand pair (every 4 characters)
+        for (int i = 0; i < line.length(); i += 4) {
+            if (i + 4 <= line.length()) {
+                String opcode = line.substring(i, i + 2); // Extract the opcode part
+                String operandStr = line.substring(i + 2, i + 4); // Extract the operand part
 
-        // Run the check and handle the operand error interrupt
-        try {
-            checkOperandError(operations);
-        } catch (OperandError e) {
-            System.out.println("Interrupt: " + e.getMessage());
+                // Validate opcode
+                if (!validOpcodes.contains(opcode)) {
+                    raiseOpcodeInterrupt(opcode);
+                } else {
+                    // Validate operand
+                    if (!isValidOperand(operandStr)) {
+                        raiseOperandInterrupt(operandStr);
+                    }
+                }
+            }
         }
     }
+
+    // Method to check if the operand is valid (numeric and within range)
+    public static boolean isValidOperand(String operand) {
+        try {
+            int value = Integer.parseInt(operand);
+            return value >= MIN_OPERAND && value <= MAX_OPERAND;
+        } catch (NumberFormatException e) {
+            return false; // Operand is not a valid number
+        }
+    }
+
+    // Method to raise an interrupt for invalid opcodes
+    public static void raiseOpcodeInterrupt(String invalidOpcode) {
+        System.err.println("Interrupt Raised: Invalid Opcode Detected - " + invalidOpcode);
+    }
+
+    // Method to raise an interrupt for invalid operands
+    public static void raiseOperandInterrupt(String invalidOperand) {
+        System.err.println("Interrupt Raised: Invalid Operand Detected - " + invalidOperand);
+    }
 }
+
 
 //Optimal page replacement algorithms
 
